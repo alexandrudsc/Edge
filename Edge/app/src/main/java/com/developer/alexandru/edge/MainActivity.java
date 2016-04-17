@@ -1,5 +1,10 @@
 package com.developer.alexandru.edge;
 
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
@@ -14,19 +19,20 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.ImageView;
+
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static native int add(int x, int y);
-
-    static{
-        System.loadLibrary("jni");
-    }
+    private static final int PICK_IMAGE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -37,8 +43,10 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View view) {
                 EditText editText1 = (EditText)findViewById(R.id.editText);
                 EditText editText2 = (EditText)findViewById(R.id.editText2);
-                Snackbar.make(view, "Result: " + add(Integer.valueOf(editText1.getText().toString()), Integer.valueOf(editText2.getText().toString())),
-                        Snackbar.LENGTH_LONG).setAction("Action", null).show();
+
+//                int res = BitmapOperator.add(Integer.valueOf(editText1.getText().toString()), Integer.valueOf(editText2.getText().toString()));
+//                Snackbar.make(view, "Result: " + res,
+//                        Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
 
@@ -70,6 +78,28 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_IMAGE && resultCode == Activity.RESULT_OK){
+            InputStream is = null;
+            try {
+                is = getContentResolver().openInputStream(data.getData());
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = 4;
+                Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
+                BitmapOperator operator = new BitmapOperator();
+                operator.initBitmapOperator(bitmap);
+                operator.rotate();
+                bitmap = operator.getBitmapAndFree();
+                ((ImageView)findViewById(R.id.imageView2)).setImageBitmap(bitmap);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -91,7 +121,10 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
-            // Handle the camera action
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {

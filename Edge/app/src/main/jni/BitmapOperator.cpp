@@ -3,12 +3,14 @@
 //
 
 #include "BitmapOperator.h"
+
 BitmapOperator::BitmapOperator() {
-
 }
-uint32_t* BitmapOperator::rotate(){
 
+BitmapOperator::BitmapOperator(AndroidBitmapInfo * info) {
+    this->bitmapInfo = *info;
 }
-uint32_t* BitmapOperator::zoom(){
 
+jint BitmapOperator::add(jint x, jint y) {
+    return  x + y;
 }

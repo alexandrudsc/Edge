@@ -6,16 +6,19 @@
 #define EDGE_BITMAPOPERATOR_H
 
 #include <jni.h>
-#include <android/log.h>
 #include <stdio.h>
 #include <android/bitmap.h>
 #include <unistd.h>
 
 class BitmapOperator {
-    public:
-        BitmapOperator();
-        uint32_t* rotate();
-        uint32_t* zoom();
+public:
+    BitmapOperator();
+    BitmapOperator(AndroidBitmapInfo * info);
+    jint add(jint x, jint y);
+
+    uint32_t* pixels;
+    AndroidBitmapInfo bitmapInfo;
+
 };
 
 
