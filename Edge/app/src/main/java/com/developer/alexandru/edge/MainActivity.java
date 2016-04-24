@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Camera;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -20,14 +23,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int PICK_IMAGE = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,18 +45,11 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                EditText editText1 = (EditText)findViewById(R.id.editText);
-                EditText editText2 = (EditText)findViewById(R.id.editText2);
 
-//                int res = BitmapOperator.add(Integer.valueOf(editText1.getText().toString()), Integer.valueOf(editText2.getText().toString()));
-//                Snackbar.make(view, "Result: " + res,
-//                        Snackbar.LENGTH_LONG).setAction("Action", null).show();
-            }
-        });
+        setupNavDrawer(toolbar);
+    }
 
+    private void setupNavDrawer(Toolbar toolbar) {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_activity2, menu);
+
         return true;
     }
 
@@ -121,12 +122,13 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
+            Intent intent = new Intent(this, CameraActivity.class);
+            startActivity(intent);
+        } else if (id == R.id.nav_gallery) {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
-        } else if (id == R.id.nav_gallery) {
-
         } else if (id == R.id.nav_slideshow) {
 
         } else if (id == R.id.nav_manage) {
@@ -141,4 +143,5 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+    
 }
