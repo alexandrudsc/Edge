@@ -12,18 +12,17 @@
     tools:context=".CameraActivity"
     tools:showIn="@layout/activity_camera_activity">
 
-    <com.developer.alexandru.edge.CameraSurface
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
-        android:id="@+id/surfaceView"
-        android:layout_marginTop="54dp" />
+    <com.developer.alexandru.edge.CameraHolder
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:id="@+id/surfaceView"/>
 
     <ImageView
-        android:layout_width="200dp"
-        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:layout_height="0dip"
         android:id="@+id/imageView"
         android:layout_marginTop="20dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignBottom="@+id/surfaceView" />
+        android:layout_below="@id/surfaceView"
+        android:layout_alignParentBottom="true" />
 
 </RelativeLayout>

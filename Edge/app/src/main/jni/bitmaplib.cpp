@@ -104,40 +104,16 @@ extern "C"
     JNIEXPORT void JNICALL
     Java_com_developer_alexandru_edge_BitmapOperator_rotate(JNIEnv * env, jobject obj, jobject buffer) {
         BitmapOperator* bitmapOperator = (BitmapOperator*) env->GetDirectBufferAddress(buffer);
-        if (bitmapOperator->pixels == NULL)
-            return;
-
-        uint32_t* pixels = bitmapOperator->pixels;
-        uint32_t* pixels2 = bitmapOperator->pixels;
-        uint32_t width = bitmapOperator->bitmapInfo.width;
-        uint32_t height = bitmapOperator->bitmapInfo.height;
-
-        int whereToGet = 0;
-        for (int y = height - 1; y >= height / 2; --y)
-            for (int x = width - 1; x >= 0; --x)
-            {
-                //take from each row (up to bottom), from left to right
-                uint32_t tempPixel = pixels2[width * y + x];
-                pixels2[width * y + x] = pixels[whereToGet];
-                pixels[whereToGet] = tempPixel;
-                ++whereToGet;
-            }
-
-        //if the height isn't even, flip the middle row :
-        if (height % 2 == 1)
-        {
-            int y = height / 2;
-            whereToGet = width * y;
-            int lastXToHandle = width % 2 == 0 ? (width / 2) : (width / 2) - 1;
-            for (int x = width - 1; x >= lastXToHandle; --x)
-            {
-                uint32_t tempPixel = pixels2[width * y + x];
-                pixels2[width * y + x] = pixels[whereToGet];
-                pixels[whereToGet] = tempPixel;
-                ++whereToGet;
-            }
-        }
+        bitmapOperator->rotate();
     }
+
+    // rotate bitmap 180 degrees
+    JNIEXPORT void JNICALL
+    Java_com_developer_alexandru_edge_BitmapOperator_detectEdges(JNIEnv * env, jobject obj, jobject buffer) {
+        BitmapOperator* bitmapOperator = (BitmapOperator*) env->GetDirectBufferAddress(buffer);
+        bitmapOperator->detectEdges();
+    }
+
 };
 
 

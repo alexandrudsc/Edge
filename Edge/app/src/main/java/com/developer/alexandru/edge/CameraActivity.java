@@ -7,17 +7,17 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicYuvToRGB;
+import android.renderscript.Type;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.SurfaceHolder;
-import android.view.TextureView;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.io.ByteArrayOutputStream;
@@ -26,18 +26,19 @@ import java.io.ByteArrayOutputStream;
  * Created by Alexandru on 4/17/2016.
  */
 
-public class CameraActivity extends AppCompatActivity implements Camera.PreviewCallback  {
+public class CameraActivity extends AppCompatActivity implements CameraHolder.PreviewCallback {
 
-    private SurfaceHolder surfaceHolder;
-    private CameraSurface cameraSurface;
+    private static final String TAG = "CameraActivity";
+
+    private CameraHolder cameraSurface;
     private ImageView imageView;
-    private Camera camera;
-    TextureView textureView = null;
-
-//    private CameraLayer mPreview;
-//    private OpenGLLayer glView;
+    Bitmap bitmap;
 
     BitmapOperator operator;
+    Allocation outData;
+    Allocation inData;
+    ScriptIntrinsicYuvToRGB scriptIntrinsicYuvToRGB;
+    RenderScript renderScript;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,76 +56,91 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             }
         });
 
-        setupCamera();
-
         operator = new BitmapOperator();
+
+        setupCamera();
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-//        glView = new OpenGLLayer(this);
-//        mPreview = new CameraLayer(this, glView);
-//        glView.setWillNotDraw(false);
-//
-//        float mmInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_MM, 20,
-//                getResources().getDisplayMetrics());
-//
-//        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams((int)mmInPx, (int)mmInPx);
-//        glView.setLayoutParams(layoutParams);
-//        setContentView(glView);
-//        addContentView(mPreview, layoutParams);
+    protected void onDestroy() {
+        super.onDestroy();
+        if (renderScript != null)
+            renderScript.destroy();
     }
 
-        private void setupCamera() {
-        cameraSurface = (CameraSurface) findViewById(R.id.surfaceView);
+    private void setupCamera() {
+        cameraSurface = (CameraHolder) findViewById(R.id.surfaceView);
         imageView = (ImageView) findViewById(R.id.imageView);
-//        textureView = (TextureView) findViewById(R.id.textureView);
-
-        try {
-            camera = Camera.open();
-        } catch (RuntimeException e) {
-            System.err.println(e);
-            return;
-        }
-
-        camera.setPreviewCallback(this);
-        surfaceHolder = cameraSurface.getHolder();
-
-        CameraHolder cameraHolder = new CameraHolder(this);
-        cameraHolder.setCamera(camera);
-
-        cameraSurface.setWillNotDraw(false);
-        surfaceHolder.addCallback(cameraHolder);
-
-        surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        cameraSurface.setPreviewCallback(this);
     }
-
 
     public void onPreviewFrame(byte[] data, Camera camera) {
-        try
-        {
+        try {
             BitmapFactory.Options opts = new BitmapFactory.Options();
-            // Convert to JPG
             Camera.Size previewSize = camera.getParameters().getPreviewSize();
-            YuvImage yuvimage=new YuvImage(data, ImageFormat.NV21, previewSize.width, previewSize.height, null);
+
+            // Convert to Bitmap
+            opts.inSampleSize = 4;
+
+            YuvImage yuvimage = new YuvImage(data, ImageFormat.NV21, previewSize.width, previewSize.height, null);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             yuvimage.compressToJpeg(new Rect(0, 0, previewSize.width, previewSize.height), 80, baos);
             byte[] jdata = baos.toByteArray();
-
-            // Convert to Bitmap
-            Bitmap bitmap = BitmapFactory.decodeByteArray(jdata, 0, jdata.length, opts);
+            bitmap = BitmapFactory.decodeByteArray(jdata, 0, jdata.length, opts);
 
             operator = new BitmapOperator();
             operator.initBitmapOperator(bitmap);
-            operator.rotate();
+            operator.detectEdges();
             bitmap = operator.getBitmapAndFree();
 
             imageView.setImageBitmap(bitmap);
-        }
-        catch(Exception e)
-        {
-
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
         }
     }
+
+    private void setupRenderScript(int width, int height) {
+        renderScript = RenderScript.create(this);
+        scriptIntrinsicYuvToRGB = ScriptIntrinsicYuvToRGB.create(renderScript, Element.RGBA_8888(renderScript));
+
+
+        Type.Builder tbIn = new Type.Builder(renderScript, Element.U8(renderScript));
+        tbIn.setX(width);
+        tbIn.setY(height);
+        Type.Builder tbOut = new Type.Builder(renderScript, Element.RGBA_8888(renderScript));
+        tbOut.setX(width);
+        tbOut.setY(height);
+
+        inData = Allocation.createTyped(renderScript, tbIn.create(), Allocation.MipmapControl.MIPMAP_NONE,  Allocation.USAGE_SCRIPT & Allocation.USAGE_SHARED);
+        outData = Allocation.createTyped(renderScript, tbOut.create(), Allocation.MipmapControl.MIPMAP_NONE,  Allocation.USAGE_SCRIPT & Allocation.USAGE_SHARED);
+
+    }
+
+    private static void decodeYUV420SP(int[] rgb, byte[] yuv420sp, int width, int height) {
+        final int frameSize = width * height;
+
+        for (int j = 0, yp = 0; j < height; j++) {
+            int uvp = frameSize + (j >> 1) * width, u = 0, v = 0;
+            for (int i = 0; i < width; i++, yp++) {
+                int y = (0xff & ((int) yuv420sp[yp])) - 16;
+                if (y < 0) y = 0;
+                if ((i & 1) == 0) {
+                    v = (0xff & yuv420sp[uvp++]) - 128;
+                    u = (0xff & yuv420sp[uvp++]) - 128;
+                }
+
+                int y1192 = 1192 * y;
+                int r = (y1192 + 1634 * v);
+                int g = (y1192 - 833 * v - 400 * u);
+                int b = (y1192 + 2066 * u);
+
+                if (r < 0) r = 0; else if (r > 262143) r = 262143;
+                if (g < 0) g = 0; else if (g > 262143) g = 262143;
+                if (b < 0) b = 0; else if (b > 262143) b = 262143;
+
+                rgb[yp] = 0xff000000 | ((r << 6) & 0xff0000) | ((g >> 2) & 0xff00) | ((b >> 10) & 0xff);
+            }
+        }
+    }
+
 }

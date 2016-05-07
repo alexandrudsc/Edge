@@ -21,6 +21,8 @@ public class BitmapOperator {
     private native void rotate(ByteBuffer buffer);
     private native Bitmap getBitmapFromMem(ByteBuffer buffer);
     private native void freeMem(ByteBuffer buffer);
+    private native void detectEdges(ByteBuffer buffer);
+
 
     // store the bitmap into native memory and return the memory zone
     public void initBitmapOperator(Bitmap bitmap) {
@@ -37,11 +39,14 @@ public class BitmapOperator {
         return bitmap;
     }
 
-
-
     public void rotate() {
         if (byteBuffer != null)
             rotate(byteBuffer);
+    }
+
+    public void detectEdges() {
+        if (byteBuffer != null)
+            detectEdges(byteBuffer);
     }
 
     @Nullable

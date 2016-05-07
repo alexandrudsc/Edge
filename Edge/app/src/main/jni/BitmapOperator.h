@@ -15,10 +15,13 @@ public:
     BitmapOperator();
     BitmapOperator(AndroidBitmapInfo * info);
     jint add(jint x, jint y);
-
+    void rotate();
+    void detectEdges();
     uint32_t* pixels;
     AndroidBitmapInfo bitmapInfo;
 
+private:
+    uint32_t getRValue(uint32_t pixel);
 };
 
 

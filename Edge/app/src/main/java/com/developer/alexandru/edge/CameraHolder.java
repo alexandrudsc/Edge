@@ -1,12 +1,14 @@
 package com.developer.alexandru.edge;
 
 import android.content.Context;
+import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
-
-import org.w3c.dom.DOMException;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,49 +16,85 @@ import java.util.List;
 /**
  * Created by Alexandru on 4/21/2016.
  */
-public class CameraHolder extends ViewGroup implements SurfaceHolder.Callback {
+public class CameraHolder extends SurfaceView implements SurfaceHolder.Callback {
+    private static final String TAG = "CAMERA HOLDER";
 
-        SurfaceView mSurfaceView;
-        SurfaceHolder mHolder;
-        Camera mCamera;
-        CameraActivity activity;
+    private SurfaceHolder mHolder;
+    private Camera mCamera;
 
-        public CameraHolder(CameraActivity activity) {
-            super(activity);
+    private CameraHolder.PreviewCallback callback;
 
-            this.activity = activity;
-
-            mSurfaceView = new SurfaceView(activity);
-            addView(mSurfaceView);
+    public CameraHolder(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        try {
+            mCamera = Camera.open();
 
             // Install a SurfaceHolder.Callback so we get notified when the
             // underlying surface is created and destroyed.
-            mHolder = mSurfaceView.getHolder();
+            mHolder = getHolder();
             mHolder.addCallback(this);
+            // deprecated setting, but required on Android versions prior to 3.0
             mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        } catch (RuntimeException ex)
+        {
+            Log.d(TAG, ex.toString());
+        }
+    }
+
+    public void surfaceCreated(SurfaceHolder holder) {
+        // The Surface has been created, now tell the camera where to draw the preview.
+        try {
+            mCamera.setPreviewDisplay(holder);
+            mCamera.startPreview();
+        } catch (IOException e) {
+            Log.d(TAG, "Error setting camera preview: " + e.getMessage());
+        }
+    }
+
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        try {
+            mCamera.setPreviewCallback(null);
+            mCamera.release();
+            mCamera = null;
+        } catch (RuntimeException ex)
+        {
+            Log.d(TAG, ex.toString());
+        }
+    }
+
+    public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        // If your preview can change or rotate, take care of those events here.
+        // Make sure to stop the preview before resizing or reformatting it.
+
+        if (mCamera == null || mHolder.getSurface() == null){
+            // preview surface does not exist
+            return;
         }
 
-    public void setCamera(Camera camera) {
-        if (mCamera == camera) { return; }
+        // stop preview before making changes
+        try {
+            mCamera.stopPreview();
+        } catch (Exception e){
+            // ignore: tried to stop a non-existent preview
+        }
 
-//        stopPreviewAndFreeCamera();
+        // set preview size and make any resize, rotate or
+        // reformatting changes her
+        mCamera.setDisplayOrientation(90);
+        Camera.Parameters cameraParameters = mCamera.getParameters();
+        cameraParameters.setPreviewFormat(ImageFormat.NV21);
 
-        mCamera = camera;
-//        mCamera.setPreviewCallback(activity);
+        mCamera.setParameters(cameraParameters);
 
-        if (mCamera != null) {
-            List<Camera.Size> localSizes = mCamera.getParameters().getSupportedPreviewSizes();
-            requestLayout();
+        // start preview with new settings
+        try {
+            mCamera.setPreviewDisplay(mHolder);
+            mCamera.setPreviewCallback(callback);
 
-            try {
-                mCamera.setPreviewDisplay(mHolder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            // Important: Call startPreview() to start updating the preview
-            // surface. Preview must be started before you can take a picture.
             mCamera.startPreview();
+
+        } catch (Exception e){
+            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
 
@@ -65,67 +103,17 @@ public class CameraHolder extends ViewGroup implements SurfaceHolder.Callback {
 
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        try {
-            mCamera = Camera.open();
-        }
-        catch (RuntimeException e) {
-            System.err.println(e);
-            return;
-        }
-
-        Camera.Parameters param;
-        param = mCamera.getParameters();
-        param.setPreviewSize(352, 288);
-        mCamera.setParameters(param);
-        mCamera.setPreviewCallback(activity);
-
-        try {
-            mCamera.setPreviewDisplay(holder);
+    public void setPreviewCallback(PreviewCallback callback) {
+        this.callback = callback;
+        if (this.mCamera != null) {
+            mCamera.setPreviewCallback(this.callback);
             mCamera.startPreview();
         }
-        catch (Exception e) {
-            System.err.println(e);
-            return;
-        }
+        else
+            Log.d(TAG, "Camera was null");
     }
 
-    @Override
-    public void surfaceChanged(SurfaceHolder surfaceHolder, int format, int width, int height) {
-        if (surfaceHolder.getSurface() == null) {
-            return;
-        }
-
-        try {
-            mCamera.stopPreview();
-        }
-
-        catch (Exception e) {
-        }
-
-        try {
-            mCamera.setPreviewDisplay(surfaceHolder);
-            mCamera.setPreviewCallback(activity);
-            mCamera.startPreview();
-        }
-        catch (Exception e) {
-        }
+    public interface PreviewCallback extends Camera.PreviewCallback{
+        void onPreviewFrame(byte[] data, Camera camera);
     }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        if (mCamera != null) {
-            try {
-                mCamera.stopPreview();
-                mCamera.release();
-
-            } catch (RuntimeException ex) {
-
-            } finally {
-                mCamera = null;
-            }
-        }
-    }
-
 }

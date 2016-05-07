@@ -87,10 +87,12 @@ public class MainActivity extends AppCompatActivity
                 is = getContentResolver().openInputStream(data.getData());
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inSampleSize = 4;
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
                 Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
                 BitmapOperator operator = new BitmapOperator();
                 operator.initBitmapOperator(bitmap);
-                operator.rotate();
+//                operator.rotate();
+                operator.detectEdges();
                 bitmap = operator.getBitmapAndFree();
                 ((ImageView)findViewById(R.id.imageView2)).setImageBitmap(bitmap);
             } catch (FileNotFoundException e) {
