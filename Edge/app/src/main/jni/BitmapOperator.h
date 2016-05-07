@@ -21,7 +21,11 @@ public:
     AndroidBitmapInfo bitmapInfo;
 
 private:
-    uint32_t getRValue(uint32_t pixel);
+    int getAValue(uint32_t pixel);          // alpha
+    int getRValue(uint32_t pixel);          // red
+    int getGValue(uint32_t pixel);          // green
+    int getBValue(uint32_t pixel);          // blue
+    uint32_t createPixel(int a, int r, int g, int b);
 };
 
 

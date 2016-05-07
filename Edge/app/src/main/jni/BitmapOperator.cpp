@@ -62,21 +62,43 @@ void BitmapOperator::detectEdges() {
     uint32_t width = this->bitmapInfo.width;
     uint32_t height = this->bitmapInfo.height;
 
-    // Laplace
+
     int ind_pixel = 0;
-    int r, g, b;
+    int r, g, b, grey;
+    int laplace;
 
     for (int yy = 1; yy < height; yy++) {
         int y = yy - 1;
         for (int x = 1; x < width; x++, ind_pixel++) {
-            b = (int) ((pixels[ind_pixel] & 0x00FF0000) >> 16);
-            g = (int)((pixels[ind_pixel] & 0x0000FF00) >> 8);
-            r = (int) (pixels[ind_pixel] & 0x000000FF);
-            pixels[ind_pixel] |= 0x00FF0000;
+            uint32_t pixel = pixels[ind_pixel];
+
+            r = getRValue(pixel);
+            g = getGValue(pixel);
+            b = getBValue(pixel);
+            grey = (r + g + b) / 3;
+            pixels[ind_pixel] = createPixel(getAValue(pixel), r, r, r);
         }
-    }
 }
 
-uint32_t  BitmapOperator::getRValue(uint32_t pixel) {
-    return pixel & 0xFF0000;
+int BitmapOperator::getAValue(uint32_t pixel) {
+    return (int)((pixel & 0xFF000000) >> 24);
+}
+
+int BitmapOperator::getRValue(uint32_t pixel) {
+    return (int)((pixel & 0x00FF0000) >> 16);
+}
+
+int BitmapOperator::getGValue(uint32_t pixel) {
+    return (int)((pixel & 0x0000FF00) >> 8);
+}
+
+int BitmapOperator::getBValue(uint32_t pixel) {
+    return (int)((pixel & 0x000000FF));
+}
+
+uint32_t BitmapOperator::createPixel(int a, int r, int g, int b) {
+    return (uint32_t) (((a << 24) & 0xFF000000) +
+                               ((r << 16)  & 0x00FF0000) +
+                               ((g << 8) & 0x0000FF00) +
+                               (b & 0x000000FF));
 }
