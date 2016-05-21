@@ -27,7 +27,7 @@
             android:name=".CameraActivity"
             android:label="@string/title_activity_camera_activiry"
             android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="portrait">
+            android:screenOrientation="landscape">
 
         </activity>
     </application>

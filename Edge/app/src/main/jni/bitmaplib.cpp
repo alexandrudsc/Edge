@@ -1,7 +1,5 @@
-#include <jni.h>
-#include <android/bitmap.h>
 #include "BitmapOperator.h"
-
+#include "bitmaplib.h"
 
 extern "C"
 {
@@ -107,13 +105,19 @@ extern "C"
         bitmapOperator->rotate();
     }
 
-    // rotate bitmap 180 degrees
+    // detect edges
     JNIEXPORT void JNICALL
     Java_com_developer_alexandru_edge_BitmapOperator_detectEdges(JNIEnv * env, jobject obj, jobject buffer) {
         BitmapOperator* bitmapOperator = (BitmapOperator*) env->GetDirectBufferAddress(buffer);
         bitmapOperator->detectEdges();
     }
 
+    // greyscale effect
+    JNIEXPORT void JNICALL
+    Java_com_developer_alexandru_edge_BitmapOperator_blackAndWhite(JNIEnv * env, jobject obj, jobject buffer) {
+        BitmapOperator* bitmapOperator = (BitmapOperator*) env->GetDirectBufferAddress(buffer);
+        bitmapOperator->blackAndWhite();
+    }
 };
 
 

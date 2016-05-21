@@ -22,7 +22,7 @@ public class BitmapOperator {
     private native Bitmap getBitmapFromMem(ByteBuffer buffer);
     private native void freeMem(ByteBuffer buffer);
     private native void detectEdges(ByteBuffer buffer);
-
+    private native void blackAndWhite(ByteBuffer buffer);
 
     // store the bitmap into native memory and return the memory zone
     public void initBitmapOperator(Bitmap bitmap) {
@@ -47,6 +47,11 @@ public class BitmapOperator {
     public void detectEdges() {
         if (byteBuffer != null)
             detectEdges(byteBuffer);
+    }
+
+    public void blackAndWhite() {
+        if (byteBuffer != null)
+            blackAndWhite(byteBuffer);
     }
 
     @Nullable

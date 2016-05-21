@@ -5,4 +5,7 @@
 #ifndef EDGE_TEST_H
 #define EDGE_TEST_H
 
+#include <jni.h>
+#include <android/bitmap.h>
+
 #endif //EDGE_TEST_H

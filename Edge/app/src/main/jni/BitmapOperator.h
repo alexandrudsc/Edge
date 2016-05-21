@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <android/bitmap.h>
 #include <unistd.h>
+#include <cmath>
 
 class BitmapOperator {
 public:
@@ -17,6 +18,7 @@ public:
     jint add(jint x, jint y);
     void rotate();
     void detectEdges();
+    void blackAndWhite();
     uint32_t* pixels;
     AndroidBitmapInfo bitmapInfo;
 

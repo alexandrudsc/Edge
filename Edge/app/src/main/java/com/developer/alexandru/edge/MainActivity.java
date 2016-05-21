@@ -35,6 +35,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final int PICK_IMAGE = 1;
 
+    private int action = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pickImage();
+                pickImage(R.id.nav_gallery_edge);
             }
         });
 
@@ -98,8 +99,20 @@ public class MainActivity extends AppCompatActivity
                 Bitmap bitmap = BitmapFactory.decodeStream(is, null, options);
                 BitmapOperator operator = new BitmapOperator();
                 operator.initBitmapOperator(bitmap);
-//                operator.rotate();
-                operator.detectEdges();
+
+                switch (action)
+                {
+                    case R.id.nav_gallery_grey:
+                        operator.blackAndWhite();
+                        break;
+                    case R.id.nav_gallery_rotate:
+                        operator.rotate();
+                        break;
+                    case R.id.nav_gallery_edge:
+                        operator.detectEdges();
+                        break;
+                }
+
                 bitmap = operator.getBitmapAndFree();
                 ((ImageView)findViewById(R.id.imageView2)).setImageBitmap(bitmap);
             } catch (FileNotFoundException e) {
@@ -133,16 +146,12 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_camera) {
             Intent intent = new Intent(this, CameraActivity.class);
             startActivity(intent);
-        } else if (id == R.id.nav_gallery) {
-            pickImage();
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.nav_gallery_edge) {
+            pickImage(id);
+        } else if (id == R.id.nav_gallery_grey) {
+            pickImage(id);
+        } else if (id == R.id.nav_gallery_rotate) {
+            pickImage(id);
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -150,10 +159,11 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void pickImage() {
+    private void pickImage(int id) {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
+        action = id;
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
     }
 

@@ -44,8 +44,6 @@ public class CameraActivity extends AppCompatActivity implements CameraHolder.Pr
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera_activity);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         operator = new BitmapOperator();
 
@@ -81,7 +79,6 @@ public class CameraActivity extends AppCompatActivity implements CameraHolder.Pr
 
             operator = new BitmapOperator();
             operator.initBitmapOperator(bitmap);
-            operator.rotate();
             operator.detectEdges();
             bitmap = operator.getBitmapAndFree();
 
