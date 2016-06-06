@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final int PICK_IMAGE = 1;
+    private static final int CAMERA_REQUEST = 1888;
 
     private int action = 0;
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pickImage(R.id.nav_gallery_edge);
+                takePictureAndRotate();
             }
         });
 
@@ -118,7 +119,15 @@ public class MainActivity extends AppCompatActivity
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
+        }
+        else if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            Bitmap picture = (Bitmap) data.getExtras().get("data");
+            BitmapOperator operator = new BitmapOperator();
+            operator.initBitmapOperator(picture);
+            operator.detectEdges();
 
+            picture = operator.getBitmapAndFree();
+            ((ImageView)findViewById(R.id.imageView2)).setImageBitmap(picture);
         }
     }
 
@@ -165,6 +174,11 @@ public class MainActivity extends AppCompatActivity
         intent.setAction(Intent.ACTION_GET_CONTENT);
         action = id;
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+    }
+
+    private void takePictureAndRotate() {
+        Intent cameraIntent = new  Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(cameraIntent, CAMERA_REQUEST);
     }
 
 }
